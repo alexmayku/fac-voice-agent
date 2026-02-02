@@ -1,7 +1,10 @@
+import signal
+import sys
 from dotenv import load_dotenv
 from livekit import agents
 from livekit.agents import AgentServer, AgentSession, Agent, room_io, function_tool
 from livekit.plugins import openai, noise_cancellation
+from pathlib import Path
 
 load_dotenv(".env.local")
 
@@ -10,15 +13,10 @@ memory = {}
 
 class VoiceAgent(Agent):
     def __init__(self):
-        super().__init__(
-            instructions="""
-                You are a helpful assistant communicating via voice.
-                Keep your responses concise and conversational.
+        system_prompt = (Path(__file__).parent.parent / "prompts" / "weekly_coach_system.txt").read_text()
 
-                You have the ability to remember things for the user.
-                When they ask you to remember something, use the save_note tool.
-                When they ask what you've saved or to recall something, use the get_notes tool.
-            """,
+        super().__init__(
+            instructions=system_prompt,
         )
 
     @function_tool
@@ -34,6 +32,15 @@ class VoiceAgent(Agent):
         if not memory:
             return "No notes saved yet."
         return "\n".join([f"#{id}: {note}" for id, note in memory.items()])
+
+    @function_tool
+    async def send_session_summary(self, summary: str) -> str:
+        """Send a written summary to the user's chat. Call this once when wrapping up the session."""
+        await self.session.room_io.room.local_participant.send_text(
+            summary,
+            topic="lk.chat",
+        )
+        return "Summary sent."
 
 server = AgentServer()
 
@@ -57,8 +64,20 @@ async def entrypoint(ctx: agents.JobContext):
     )
 
     await session.generate_reply(
-        instructions="Greet the user and let them know you can remember things for them."
+        instructions="""
+Let’s take a breath.
+
+This is a short weekly focus check.
+
+What’s on your mind?
+"""
     )
 
 if __name__ == "__main__":
+    # Force exit on SIGINT/SIGTERM so Ctrl+C actually stops the process
+    def _exit_on_signal(signum, frame):
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, _exit_on_signal)
+    signal.signal(signal.SIGTERM, _exit_on_signal)
     agents.cli.run_app(server)
