@@ -1,3 +1,5 @@
+import logging
+import os
 import signal
 import sys
 from dotenv import load_dotenv
@@ -5,8 +7,13 @@ from livekit import agents
 from livekit.agents import AgentServer, AgentSession, Agent, room_io, function_tool
 from livekit.plugins import openai, noise_cancellation
 from pathlib import Path
+import resend
 
 load_dotenv(".env.local")
+
+logger = logging.getLogger(__name__)
+
+resend.api_key = os.getenv("RESEND_API_KEY", "")
 
 # Simple in-memory storage for notes
 memory = {}
@@ -34,13 +41,52 @@ class VoiceAgent(Agent):
         return "\n".join([f"#{id}: {note}" for id, note in memory.items()])
 
     @function_tool
+    async def send_test_email(self) -> str:
+        """Send a test email to verify email delivery is working. Call this when the user asks to test the email."""
+        email_to = os.getenv("EMAIL_TO")
+        if not resend.api_key or not email_to:
+            return (
+                "Test email not sent. "
+                "RESEND_API_KEY=" + ("set" if resend.api_key else "missing") +
+                ", EMAIL_TO=" + (email_to or "missing")
+            )
+        try:
+            resend.Emails.send({
+                "from": "Coach <onboarding@resend.dev>",
+                "to": email_to,
+                "subject": "Test — coaching email setup",
+                "text": "If you're reading this, email delivery is working.",
+            })
+            return "Test email sent to " + email_to
+        except Exception as e:
+            logger.error("Test email failed: %s", e)
+            return "Test email failed: " + str(e)
+
+    @function_tool
     async def send_session_summary(self, summary: str) -> str:
         """Send a written summary to the user's chat. Call this once when wrapping up the session."""
         await self.session.room_io.room.local_participant.send_text(
             summary,
             topic="lk.chat",
         )
-        return "Summary sent."
+        email_to = os.getenv("EMAIL_TO")
+        if resend.api_key and email_to:
+            try:
+                resend.Emails.send({
+                    "from": "Coach <onboarding@resend.dev>",
+                    "to": email_to,
+                    "subject": "Weekly coaching summary",
+                    "text": summary,
+                })
+                return "Summary sent to chat and emailed to " + email_to
+            except Exception as e:
+                logger.error("Failed to send email via Resend: %s", e)
+                return "Summary sent to chat. Email failed: " + str(e)
+        else:
+            logger.warning("Email skipped: RESEND_API_KEY=%s, EMAIL_TO=%s",
+                           "set" if resend.api_key else "missing",
+                           email_to or "missing")
+            return "Summary sent to chat. Email skipped (missing RESEND_API_KEY or EMAIL_TO)."
 
 server = AgentServer()
 

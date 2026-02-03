@@ -35,7 +35,7 @@ export const APP_CONFIG_DEFAULTS: AppConfig = {
   accent: '#002cf2',
   logoDark: '/lk-logo-dark.svg',
   accentDark: '#1fd5f9',
-  startButtonText: 'Start call',
+  startButtonText: 'Start Coaching Session',
 
   // agent dispatch configuration
   agentName: process.env.AGENT_NAME ?? undefined,
