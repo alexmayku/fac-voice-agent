@@ -2,7 +2,7 @@
 
 A local voice-first coaching app built with [LiveKit Agents](https://docs.livekit.io/agents) and a Next.js frontend.
 
-**This project is a tutorial from [Founders and Coders](https://www.foundersandcoders.com/).**
+**This project is based on a tutorial on setting up a LiveKit voice agent from [Founders and Coders](https://www.foundersandcoders.com/).**
 
 ## What this app does
 
