@@ -21,20 +21,28 @@ function WelcomeImage() {
 interface WelcomeViewProps {
   startButtonText: string;
   onStartCall: () => void;
+  mode: string | null;
 }
 
 export const WelcomeView = ({
   startButtonText,
   onStartCall,
+  mode,
   ref,
 }: React.ComponentProps<'div'> & WelcomeViewProps) => {
+  const isReview = mode === 'review';
+  const tagline = isReview
+    ? "Let\u2019s look back at the week and see what you learned."
+    : "Let\u2019s figure out what matters this week. Then we\u2019ll turn it into a plan you can stick to.";
+  const buttonText = isReview ? 'Start Weekly Review' : startButtonText;
+
   return (
     <div ref={ref}>
       <section className="bg-background flex flex-col items-center justify-center text-center">
         <WelcomeImage />
 
         <p className="text-foreground max-w-prose pt-1 leading-6 font-medium">
-          Let&apos;s figure out what matters this week. Then we&apos;ll turn it into a plan you can stick to.
+          {tagline}
         </p>
 
         <Button
@@ -42,7 +50,7 @@ export const WelcomeView = ({
           onClick={onStartCall}
           className="mt-6 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase"
         >
-          {startButtonText}
+          {buttonText}
         </Button>
       </section>
 

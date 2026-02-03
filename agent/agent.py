@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import signal
@@ -14,6 +15,8 @@ load_dotenv(".env.local")
 logger = logging.getLogger(__name__)
 
 resend.api_key = os.getenv("RESEND_API_KEY", "")
+
+DATA_DIR = Path(__file__).parent / "data"
 
 # Simple in-memory storage for notes
 memory = {}
@@ -69,6 +72,11 @@ class VoiceAgent(Agent):
             summary,
             topic="lk.chat",
         )
+
+        # Persist summary so the Friday review agent can reference it
+        DATA_DIR.mkdir(exist_ok=True)
+        (DATA_DIR / "latest_summary.json").write_text(json.dumps({"summary": summary}))
+
         email_to = os.getenv("EMAIL_TO")
         if resend.api_key and email_to:
             try:
@@ -118,6 +126,81 @@ This is a short weekly focus check.
 What’s on your mind?
 """
     )
+
+class ReviewAgent(Agent):
+    def __init__(self):
+        system_prompt = (Path(__file__).parent.parent / "prompts" / "weekly_review_system.txt").read_text()
+
+        # Inject Monday commitments if available
+        summary_path = DATA_DIR / "latest_summary.json"
+        if summary_path.exists():
+            try:
+                data = json.loads(summary_path.read_text())
+                commitments = data.get("summary", "")
+                system_prompt += f"\n\nThe user's Monday commitments:\n{commitments}"
+            except (json.JSONDecodeError, KeyError):
+                system_prompt += "\n\nNo Monday commitments were found. Ask the user what they set out to do this week."
+        else:
+            system_prompt += "\n\nNo Monday commitments were found. Ask the user what they set out to do this week."
+
+        super().__init__(
+            instructions=system_prompt,
+        )
+
+    @function_tool
+    async def send_review_summary(self, summary: str) -> str:
+        """Send the review reflection summary to the user's chat. Call this once when wrapping up the review session."""
+        await self.session.room_io.room.local_participant.send_text(
+            summary,
+            topic="lk.chat",
+        )
+        email_to = os.getenv("EMAIL_TO")
+        if resend.api_key and email_to:
+            try:
+                resend.Emails.send({
+                    "from": "Coach <onboarding@resend.dev>",
+                    "to": email_to,
+                    "subject": "Weekly review reflections",
+                    "text": summary,
+                })
+                return "Review summary sent to chat and emailed to " + email_to
+            except Exception as e:
+                logger.error("Failed to send review email via Resend: %s", e)
+                return "Review summary sent to chat. Email failed: " + str(e)
+        else:
+            logger.warning("Email skipped: RESEND_API_KEY=%s, EMAIL_TO=%s",
+                           "set" if resend.api_key else "missing",
+                           email_to or "missing")
+            return "Review summary sent to chat. Email skipped (missing RESEND_API_KEY or EMAIL_TO)."
+
+
+@server.rtc_session(agent_name="review-coach")
+async def review_entrypoint(ctx: agents.JobContext):
+    session = AgentSession(
+        llm=openai.realtime.RealtimeModel(
+            voice="alloy",
+            model="gpt-4o-mini-realtime-preview",
+        ),
+    )
+
+    await session.start(
+        room=ctx.room,
+        agent=ReviewAgent(),
+        room_options=room_io.RoomOptions(
+            audio_input=room_io.AudioInputOptions(
+                noise_cancellation=noise_cancellation.BVC(),
+            ),
+        ),
+    )
+
+    await session.generate_reply(
+        instructions="""
+Let's take a breath.
+
+It's the end of the week. Let's look back at what you set out to do and see how it went.
+"""
+    )
+
 
 if __name__ == "__main__":
     # Force exit on SIGINT/SIGTERM so Ctrl+C actually stops the process

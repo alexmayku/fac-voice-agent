@@ -50,6 +50,11 @@ yarn-error.log*
 *.pem
 
 # ------------------
+# Agent runtime data
+# ------------------
+agent/data/
+
+# ------------------
 # Vercel
 # ------------------
 .vercel

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { TokenSource } from 'livekit-client';
 import { useSession } from '@livekit/components-react';
 import { WarningIcon } from '@phosphor-icons/react/dist/ssr';
@@ -27,22 +28,30 @@ interface AppProps {
 }
 
 export function App({ appConfig }: AppProps) {
+  const searchParams = useSearchParams();
+  const mode = searchParams.get('mode');
+  const effectiveAgentName = mode === 'review' ? 'review-coach' : appConfig.agentName;
+
+  const effectiveConfig = useMemo(() => {
+    return { ...appConfig, agentName: effectiveAgentName };
+  }, [appConfig, effectiveAgentName]);
+
   const tokenSource = useMemo(() => {
     return typeof process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT === 'string'
-      ? getSandboxTokenSource(appConfig)
+      ? getSandboxTokenSource(effectiveConfig)
       : TokenSource.endpoint('/api/connection-details');
-  }, [appConfig]);
+  }, [effectiveConfig]);
 
   const session = useSession(
     tokenSource,
-    appConfig.agentName ? { agentName: appConfig.agentName } : undefined
+    effectiveAgentName ? { agentName: effectiveAgentName } : undefined
   );
 
   return (
     <AgentSessionProvider session={session}>
       <AppSetup />
       <main className="grid h-svh grid-cols-1 place-content-center">
-        <ViewController appConfig={appConfig} />
+        <ViewController appConfig={appConfig} mode={mode} />
       </main>
       <StartAudioButton label="Start Audio" />
       <Toaster
