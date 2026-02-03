@@ -1,113 +1,208 @@
-# LiveKit Voice Agent
+# LiveKit Weekly Coach (LiveKit + OpenAI)
 
-A voice AI app built with [LiveKit Agents](https://docs.livekit.io/agents): a Python agent that speaks and remembers notes, and a Next.js frontend for real-time voice interaction.
+A local voice-first coaching app built with [LiveKit Agents](https://docs.livekit.io/agents) and a Next.js frontend.
 
 **This project is a tutorial from [Founders and Coders](https://www.foundersandcoders.com/).**
 
-## What’s in this repo
+## What this app does
 
-- **`agent/`** — Python voice agent (LiveKit Agents + OpenAI Realtime) with tools to save and recall notes.
-- **`frontend/`** — Next.js app using [Agents UI](https://livekit.io/ui) for the voice interface, audio controls, and chat transcript.
+You run:
 
-You run the agent and the frontend separately; the frontend connects to LiveKit and talks to your agent in a room.
+- **A Next.js web app** (`frontend/`) that provides the call UI (mic, transcript, controls) and mints **LiveKit access tokens**.
+- **A Python LiveKit agent server** (`agent/`) that connects to the room and speaks via **OpenAI Realtime**.
+
+The Python server exposes **two voice agents**:
+
+- **Weekly planning coach (Monday)**: helps you choose 1–3 commitments; **must send a written summary** at the end.
+- **Weekly review coach (Friday)**: reflects on the week; automatically includes the Monday commitments if available.
+
+Optionally, the agent can **email** summaries to you (via Resend), and this repo includes **GitHub Actions** that can send Monday/Friday invitation emails on a schedule.
+
+## Repo tour (what’s important)
+
+- **`agent/agent.py`**: LiveKit agent server with two sessions:
+  - Default session = planning coach
+  - Named agent session `review-coach` = Friday review coach
+- **`prompts/weekly_coach_system.txt`**: system prompt for planning coach (requires `send_session_summary` tool call)
+- **`prompts/weekly_review_system.txt`**: system prompt for review coach (requires `send_review_summary` tool call)
+- **`agent/send_invitation.py`**: sends “Monday planning” or “Friday review” invitation emails via Resend
+- **`.github/workflows/*`**: scheduled workflows to send invitations (Mon/Fri @ 10:00 UTC)
+- **`frontend/app/api/connection-details/route.ts`**: server route that generates LiveKit participant tokens (and can request agent dispatch)
+- **`frontend/app-config.ts`**: reads `AGENT_NAME` to optionally target a specific agent (like `review-coach`)
 
 ## Prerequisites
 
-- **Python 3.13+** (agent)
-- **Node.js** and **pnpm** (frontend)
-- A [LiveKit Cloud](https://cloud.livekit.io/) project (or self-hosted LiveKit server)
-- An [OpenAI API key](https://platform.openai.com/api-keys) (for the agent’s voice model)
+- **LiveKit**: a LiveKit Cloud project (recommended) or a self-hosted LiveKit server
+- **OpenAI**: an API key (used by the Python agent’s realtime model)
+- **Python**: `>=3.12, <3.14` (as specified in `agent/pyproject.toml`)
+- **uv**: Python package manager used by this repo (`uv sync`, `uv run`)
+- **Node.js** + **pnpm**: for the Next.js frontend
 
-## Quick start
+Optional (only if you want email):
 
-### 1. LiveKit credentials
+- **Resend** account + API key (`RESEND_API_KEY`)
 
-Create a project in [LiveKit Cloud](https://cloud.livekit.io/) and note:
+## Local setup (step-by-step)
 
-- **LIVEKIT_URL** (e.g. `wss://your-project.livekit.cloud`)
-- **LIVEKIT_API_KEY**
-- **LIVEKIT_API_SECRET**
+### 1) Create LiveKit credentials
 
-### 2. Run the agent
+In LiveKit Cloud, copy:
+
+- `LIVEKIT_URL` (usually `wss://<project-subdomain>.livekit.cloud`)
+- `LIVEKIT_API_KEY`
+- `LIVEKIT_API_SECRET`
+
+### 2) Configure the frontend env
+
+The frontend uses these values to mint **participant tokens** (server-side).
 
 ```bash
-cd agent
-uv sync
-cp .env.example .env.local   # if you have an example; otherwise create .env.local
+cd frontend
+cp .env.example .env.local
 ```
 
-In `agent/.env.local` set:
+Edit `frontend/.env.local`:
 
 ```env
-LIVEKIT_URL=wss://your-project.livekit.cloud
-LIVEKIT_API_KEY=your_api_key
-LIVEKIT_API_SECRET=your_api_secret
-OPENAI_API_KEY=your_openai_api_key
+LIVEKIT_API_KEY=...
+LIVEKIT_API_SECRET=...
+LIVEKIT_URL=wss://...
+
+# Optional: choose which agent to dispatch to
+# AGENT_NAME=review-coach
 ```
 
-Then start the agent:
+Notes:
 
-```bash
-uv run python agent.py dev
-```
+- If `AGENT_NAME` is blank/omitted, no specific agent is requested (whatever the LiveKit server decides / default agent).
+- Setting `AGENT_NAME=review-coach` makes the frontend request the review agent explicitly.
 
-### 3. Run the frontend
+### 3) Install & run the frontend
 
 ```bash
 cd frontend
 pnpm install
-cp .env.example .env.local
-```
-
-In `frontend/.env.local` set the same LiveKit values:
-
-```env
-LIVEKIT_API_KEY=your_api_key
-LIVEKIT_API_SECRET=your_api_secret
-LIVEKIT_URL=wss://your-project.livekit.cloud
-```
-
-Start the app:
-
-```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), allow microphone access, and start a call. The agent will greet you and can remember things when you ask.
+The app will be at `http://localhost:3000`.
 
-## Project structure
+### 4) Configure the Python agent env
+
+The agent reads `agent/.env.local` (see `load_dotenv(".env.local")` in `agent/agent.py`).
+
+Create `agent/.env.local`:
+
+```env
+# LiveKit (agent connects to your LiveKit project)
+LIVEKIT_URL=wss://...
+LIVEKIT_API_KEY=...
+LIVEKIT_API_SECRET=...
+
+# OpenAI (used by openai.realtime.RealtimeModel)
+OPENAI_API_KEY=...
+
+# Optional email support (Resend)
+RESEND_API_KEY=...
+EMAIL_TO=you@example.com
+```
+
+Email behaviour:
+
+- If `RESEND_API_KEY` and `EMAIL_TO` are set, the agent will email session summaries.
+- If either is missing, summaries still get posted to the in-call chat, but email is skipped.
+
+### 5) Install & run the agent server
+
+```bash
+cd agent
+uv sync
+uv run python agent.py dev
+```
+
+Keep this running while you use the frontend.
+
+## Using the two modes (Planning vs Review)
+
+### Planning coach (default)
+
+- Just open `http://localhost:3000` and start a call.
+- At the end of the session, the agent writes a bullet summary via `send_session_summary`.
+
+The Monday summary is persisted to:
+
+- `agent/data/latest_summary.json`
+
+### Review coach (`review-coach`)
+
+Two ways to trigger it:
+
+- **Frontend dispatch**: set `AGENT_NAME=review-coach` in `frontend/.env.local`, restart `pnpm dev`, then start a call.
+- **Invitation link / URL param**: open the app with `?mode=review` (e.g. `http://localhost:3000?mode=review`). The frontend will dispatch to `review-coach` automatically.
+
+When the review coach starts, it tries to load `agent/data/latest_summary.json` and injects it into the review prompt.
+
+## Email invitations (optional)
+
+This repo includes a small script + GitHub Actions to send scheduled invitations.
+
+### Send an invitation locally
+
+```bash
+cd agent
+RESEND_API_KEY=... EMAIL_TO=... APP_URL=http://localhost:3000 uv run python send_invitation.py
+```
+
+Send the Friday review version:
+
+```bash
+cd agent
+RESEND_API_KEY=... EMAIL_TO=... APP_URL=http://localhost:3000 uv run python send_invitation.py review
+```
+
+### Automated invites via GitHub Actions
+
+Workflows:
+
+- `.github/workflows/monday-invitation.yaml` (Mon @ 10:00 UTC)
+- `.github/workflows/friday-review.yaml` (Fri @ 10:00 UTC)
+
+They require repository secrets:
+
+- `RESEND_API_KEY`
+- `EMAIL_TO`
+- `APP_URL`
+
+## Troubleshooting
+
+- **Frontend returns 500 from `/api/connection-details`**
+  - Ensure `frontend/.env.local` has `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` set.
+- **You can’t hear the agent / mic issues**
+  - Check browser mic permissions and select the correct input device.
+- **Review coach doesn’t mention Monday commitments**
+  - Make sure you completed a planning session first (it writes `agent/data/latest_summary.json`).
+  - Confirm the file exists and contains valid JSON.
+- **Email isn’t being sent**
+  - Confirm `RESEND_API_KEY` and `EMAIL_TO` are set in `agent/.env.local`.
+  - You can ask the agent to call its `send_test_email` tool to verify delivery.
+
+## Project structure (high-level)
 
 ```
 livekit-voice-agent/
-├── agent/           # Python voice agent (LiveKit Agents + OpenAI)
-│   ├── agent.py     # VoiceAgent with save_note / get_notes tools
-│   └── pyproject.toml
-├── frontend/        # Next.js + Agents UI voice client
-│   ├── app/         # Routes, API (connection-details for tokens)
-│   ├── components/  # agents-ui, app, ui
-│   └── package.json
-└── README.md
+├── agent/                # Python LiveKit agent server
+├── frontend/             # Next.js UI + token-minting API route
+├── prompts/              # System prompts for both agents
+└── .github/workflows/    # Scheduled invitation emails
 ```
 
-## Agent behaviour
+## Credits / tutorial context
 
-The Python agent uses OpenAI’s Realtime API for low-latency voice. It has two tools:
-
-- **save_note** — Saves a note when the user asks to remember something.
-- **get_notes** — Returns saved notes when the user asks what was remembered.
-
-Notes are stored in memory for the lifetime of the agent process.
-
-## Frontend
-
-The frontend is based on the [LiveKit Agent Starter for React](https://github.com/livekit-examples/agent-starter-react). See `frontend/README.md` for structure, configuration, and customisation (branding, app config, Agents UI components).
-
-## Tutorial context
-
-This repository is part of a **Founders and Coders** tutorial. It is intended for learning how to build a voice AI app with LiveKit and OpenAI.
+This repository is part of a **Founders and Coders** tutorial, intended for learning how to build a voice-first app with LiveKit Agents + OpenAI Realtime and to integrate lightweight automation (scheduled emails) around it.
 
 ## Links
 
 - [LiveKit Agents docs](https://docs.livekit.io/agents)
 - [LiveKit Cloud](https://cloud.livekit.io/)
+- [Agents UI](https://livekit.io/ui)
 - [Founders and Coders](https://www.foundersandcoders.com/)
