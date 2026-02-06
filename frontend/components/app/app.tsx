@@ -37,15 +37,24 @@ export function App({ appConfig }: AppProps) {
   }, [appConfig, effectiveAgentName]);
 
   const tokenSource = useMemo(() => {
-    return typeof process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT === 'string'
-      ? getSandboxTokenSource(effectiveConfig)
-      : TokenSource.endpoint('/api/connection-details');
-  }, [effectiveConfig]);
+    if (typeof process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT === 'string') {
+      return getSandboxTokenSource(effectiveConfig);
+    }
+    return TokenSource.custom(async () => {
+      const res = await fetch('/api/connection-details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          room_config: effectiveAgentName
+            ? { agents: [{ agent_name: effectiveAgentName }] }
+            : undefined,
+        }),
+      });
+      return await res.json();
+    });
+  }, [effectiveConfig, effectiveAgentName]);
 
-  const session = useSession(
-    tokenSource,
-    effectiveAgentName ? { agentName: effectiveAgentName } : undefined
-  );
+  const session = useSession(tokenSource);
 
   return (
     <AgentSessionProvider session={session}>

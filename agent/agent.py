@@ -100,6 +100,27 @@ server = AgentServer()
 
 @server.rtc_session()
 async def entrypoint(ctx: agents.JobContext):
+    logger.info("Job received — agent_name=%r, metadata=%r", ctx.job.agent_name, ctx.job.metadata)
+
+    mode = ctx.job.metadata or ""
+
+    if mode == "review-coach":
+        agent = ReviewAgent()
+        opening = """
+Let's take a breath.
+
+It's the end of the week. Let's look back at what you set out to do and see how it went.
+"""
+    else:
+        agent = VoiceAgent()
+        opening = """
+Let's take a breath.
+
+This is a short weekly focus check.
+
+What's on your mind?
+"""
+
     session = AgentSession(
         llm=openai.realtime.RealtimeModel(
             voice="alloy",
@@ -109,7 +130,7 @@ async def entrypoint(ctx: agents.JobContext):
 
     await session.start(
         room=ctx.room,
-        agent=VoiceAgent(),
+        agent=agent,
         room_options=room_io.RoomOptions(
             audio_input=room_io.AudioInputOptions(
                 noise_cancellation=noise_cancellation.BVC(),
@@ -117,15 +138,7 @@ async def entrypoint(ctx: agents.JobContext):
         ),
     )
 
-    await session.generate_reply(
-        instructions="""
-Let’s take a breath.
-
-This is a short weekly focus check.
-
-What’s on your mind?
-"""
-    )
+    await session.generate_reply(instructions=opening)
 
 class ReviewAgent(Agent):
     def __init__(self):
@@ -173,33 +186,6 @@ class ReviewAgent(Agent):
                            email_to or "missing")
             return "Review summary sent to chat. Email skipped (missing RESEND_API_KEY or EMAIL_TO)."
 
-
-@server.rtc_session(agent_name="review-coach")
-async def review_entrypoint(ctx: agents.JobContext):
-    session = AgentSession(
-        llm=openai.realtime.RealtimeModel(
-            voice="alloy",
-            model="gpt-4o-mini-realtime-preview",
-        ),
-    )
-
-    await session.start(
-        room=ctx.room,
-        agent=ReviewAgent(),
-        room_options=room_io.RoomOptions(
-            audio_input=room_io.AudioInputOptions(
-                noise_cancellation=noise_cancellation.BVC(),
-            ),
-        ),
-    )
-
-    await session.generate_reply(
-        instructions="""
-Let's take a breath.
-
-It's the end of the week. Let's look back at what you set out to do and see how it went.
-"""
-    )
 
 
 if __name__ == "__main__":
