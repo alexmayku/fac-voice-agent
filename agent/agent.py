@@ -23,7 +23,7 @@ memory = {}
 
 class VoiceAgent(Agent):
     def __init__(self):
-        system_prompt = (Path(__file__).parent.parent / "prompts" / "weekly_coach_system.txt").read_text()
+        system_prompt = (Path(__file__).parent / "prompts" / "weekly_coach_system.txt").read_text()
 
         super().__init__(
             instructions=system_prompt,
@@ -142,7 +142,7 @@ What's on your mind?
 
 class ReviewAgent(Agent):
     def __init__(self):
-        system_prompt = (Path(__file__).parent.parent / "prompts" / "weekly_review_system.txt").read_text()
+        system_prompt = (Path(__file__).parent / "prompts" / "weekly_review_system.txt").read_text()
 
         # Inject Monday commitments if available
         summary_path = DATA_DIR / "latest_summary.json"

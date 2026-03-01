@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-agent
+  namespace: coach-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-agent
+  template:
+    metadata:
+      labels:
+        app: my-agent
+    spec:
+      containers:
+        - name: my-agent
+          image: YOUR_DOCKERHUB_USERNAME/my-agent:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: newapp-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10

@@ -9,16 +9,15 @@ type ConnectionDetails = {
   participantToken: string;
 };
 
-// NOTE: you are expected to define the following environment variables in `.env.local`:
-const API_KEY = process.env.LIVEKIT_API_KEY;
-const API_SECRET = process.env.LIVEKIT_API_SECRET;
-const LIVEKIT_URL = process.env.LIVEKIT_URL;
-
 // don't cache the results
 export const revalidate = 0;
 
 export async function POST(req: Request) {
   try {
+    const API_KEY = process.env.LIVEKIT_API_KEY;
+    const API_SECRET = process.env.LIVEKIT_API_SECRET;
+    const LIVEKIT_URL = process.env.LIVEKIT_URL;
+
     if (LIVEKIT_URL === undefined) {
       throw new Error('LIVEKIT_URL is not defined');
     }
@@ -41,6 +40,8 @@ export async function POST(req: Request) {
     const participantToken = await createParticipantToken(
       { identity: participantIdentity, name: participantName },
       roomName,
+      API_KEY,
+      API_SECRET,
       agentName
     );
 
@@ -66,9 +67,11 @@ export async function POST(req: Request) {
 function createParticipantToken(
   userInfo: AccessTokenOptions,
   roomName: string,
+  apiKey: string,
+  apiSecret: string,
   agentName?: string
 ): Promise<string> {
-  const at = new AccessToken(API_KEY, API_SECRET, {
+  const at = new AccessToken(apiKey, apiSecret, {
     ...userInfo,
     ttl: '15m',
   });
