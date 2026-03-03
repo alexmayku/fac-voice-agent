@@ -1,5 +1,6 @@
 'use client';
 
+import { UserButton } from '@clerk/nextjs';
 import { CalendarDays, ClipboardCheck, ArrowRight } from 'lucide-react';
 
 interface WelcomeViewProps {
@@ -33,6 +34,13 @@ export const WelcomeView = ({
           </svg>
           <span className="text-foreground text-lg font-semibold tracking-tight">Coach</span>
         </div>
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: 'h-9 w-9',
+            },
+          }}
+        />
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 pb-16 md:px-10">

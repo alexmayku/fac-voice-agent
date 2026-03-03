@@ -1,3 +1,4 @@
+import { ClerkProvider } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
 import localFont from 'next/font/local';
 import { headers } from 'next/headers';
@@ -60,14 +61,16 @@ export default async function RootLayout({ children }: RootLayoutProps) {
         <meta name="description" content={pageDescription} />
       </head>
       <body className="overflow-x-hidden">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <ClerkProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

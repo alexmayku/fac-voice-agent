@@ -1,3 +1,4 @@
+import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { AccessToken, type AccessTokenOptions, type VideoGrant } from 'livekit-server-sdk';
 import { RoomConfiguration } from '@livekit/protocol';
@@ -28,14 +29,13 @@ export async function POST(req: Request) {
       throw new Error('LIVEKIT_API_SECRET is not defined');
     }
 
-    // Parse agent configuration from request body
     const body = await req.json();
     const agentName: string = body?.room_config?.agents?.[0]?.agent_name;
 
-    // Generate participant token
-    const participantName = 'user';
-    const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
-    const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
+    const user = await currentUser();
+    const participantName = user?.firstName ?? user?.emailAddresses?.[0]?.emailAddress ?? 'user';
+    const participantIdentity = user?.id ?? `anon_${Math.floor(Math.random() * 10_000)}`;
+    const roomName = `coaching_${participantIdentity}_${Math.floor(Math.random() * 10_000)}`;
 
     const participantToken = await createParticipantToken(
       { identity: participantIdentity, name: participantName },

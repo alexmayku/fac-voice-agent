@@ -17,6 +17,10 @@ RUN pnpm install --frozen-lockfile
 # Copy the rest of the application code
 COPY . .
 
+# Clerk publishable key must be available at build time (NEXT_PUBLIC_ prefix)
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
 # Build the Next.js application
 RUN pnpm run build
 

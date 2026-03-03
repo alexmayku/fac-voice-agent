@@ -24,6 +24,8 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-frontend:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
 
       - name: Build and push agent
         uses: docker/build-push-action@v5
