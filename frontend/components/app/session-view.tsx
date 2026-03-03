@@ -176,7 +176,7 @@ export const SessionView = ({
       id: `msg-${i}`,
       role: isUser ? 'user' : 'agent',
       text,
-      timestamp: new Date(msg.receivedAt ?? Date.now()),
+      timestamp: new Date(msg.timestamp ?? Date.now()),
       isActions: !isUser && hasActionMarkers && text.split('\n').length > 2,
     };
   });
