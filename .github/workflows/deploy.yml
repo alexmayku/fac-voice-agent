@@ -23,7 +23,9 @@ jobs:
         with:
           context: ./frontend
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-frontend:${{ github.sha }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/my-frontend:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/my-frontend:latest
           build-args: |
             NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
 
@@ -32,7 +34,9 @@ jobs:
         with:
           context: ./agent
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-agent:${{ github.sha }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/my-agent:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/my-agent:latest
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
