@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, PhoneOff, Send } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
+  useChat,
   useSessionContext,
   useSessionMessages,
   useVoiceAssistant,
-  useChat,
 } from '@livekit/components-react';
 import { useInputControls } from '@/hooks/agents-ui/use-agent-control-bar';
 import { cn } from '@/lib/shadcn/utils';
@@ -42,17 +42,17 @@ function AudioRingVisualizer({ volume, isSpeaking, isMuted }: AudioRingVisualize
       <motion.div
         animate={{ scale: isSpeaking ? ringScale3 : 1, opacity: isSpeaking ? 0.08 : 0.04 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="border-(--coach-orange) absolute h-72 w-72 rounded-full border"
+        className="absolute h-72 w-72 rounded-full border border-(--coach-orange)"
       />
       <motion.div
         animate={{ scale: isSpeaking ? ringScale2 : 1, opacity: isSpeaking ? 0.12 : 0.06 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="border-(--coach-orange) absolute h-56 w-56 rounded-full border"
+        className="absolute h-56 w-56 rounded-full border border-(--coach-orange)"
       />
       <motion.div
         animate={{ scale: isSpeaking ? ringScale1 : 1, opacity: isSpeaking ? 0.2 : 0.1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="border-(--coach-orange) absolute h-40 w-40 rounded-full border"
+        className="absolute h-40 w-40 rounded-full border border-(--coach-orange)"
       />
 
       {/* Center mic */}
@@ -96,7 +96,7 @@ function WaveformBars({ volume, isSpeaking, barCount = 24 }: WaveformBarsProps) 
           key={i}
           animate={{ height: `${Math.max(height * 32, 4)}px` }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          className="bg-(--coach-orange) w-[3px] rounded-full opacity-60"
+          className="w-[3px] rounded-full bg-(--coach-orange) opacity-60"
         />
       ))}
     </div>
@@ -205,8 +205,8 @@ export const SessionView = ({
       <div className="relative flex flex-1 flex-col items-center justify-between py-6 max-md:hidden">
         {/* Live badge */}
         <div className="flex items-center gap-2">
-          <div className="bg-(--coach-orange) flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold text-white">
-            <span className="bg-white/80 inline-block h-2 w-2 animate-pulse rounded-full" />
+          <div className="flex items-center gap-2 rounded-full bg-(--coach-orange) px-4 py-1.5 text-xs font-semibold text-white">
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-white/80" />
             LIVE SESSION &bull; {timer}
           </div>
         </div>
@@ -218,7 +218,7 @@ export const SessionView = ({
           <div className="text-center">
             <h2 className="text-foreground font-serif text-2xl font-medium">{sessionTitle}</h2>
             {transcriptMessages.length > 0 && (
-              <p className="text-(--coach-warm-gray) mt-1 max-w-xs text-sm italic">
+              <p className="mt-1 max-w-xs text-sm text-(--coach-warm-gray) italic">
                 &ldquo;{transcriptMessages[transcriptMessages.length - 1]?.text.slice(0, 80)}
                 {(transcriptMessages[transcriptMessages.length - 1]?.text.length ?? 0) > 80
                   ? '...'
@@ -247,7 +247,7 @@ export const SessionView = ({
               onDisconnect();
               session.end();
             }}
-            className="bg-(--coach-orange) flex h-14 w-14 items-center justify-center rounded-full text-white transition-opacity hover:opacity-90"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-(--coach-orange) text-white transition-opacity hover:opacity-90"
           >
             <PhoneOff className="h-6 w-6" />
           </button>
@@ -255,14 +255,14 @@ export const SessionView = ({
       </div>
 
       {/* Right panel — transcript */}
-      <div className="border-(--coach-border) flex h-full w-full flex-col border-l md:w-[420px] lg:w-[460px]">
+      <div className="flex h-full w-full flex-col border-l border-(--coach-border) md:w-[420px] lg:w-[460px]">
         {/* Transcript header */}
-        <div className="border-(--coach-border) flex items-center justify-between border-b px-5 py-4">
+        <div className="flex items-center justify-between border-b border-(--coach-border) px-5 py-4">
           <h3 className="text-foreground text-sm font-semibold">Transcript</h3>
           {/* Mobile-only live badge and controls */}
           <div className="flex items-center gap-2 md:hidden">
-            <div className="bg-(--coach-orange) flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold text-white">
-              <span className="bg-white/80 inline-block h-1.5 w-1.5 animate-pulse rounded-full" />
+            <div className="flex items-center gap-1.5 rounded-full bg-(--coach-orange) px-3 py-1 text-[10px] font-semibold text-white">
+              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-white/80" />
               {timer}
             </div>
             <button
@@ -281,7 +281,7 @@ export const SessionView = ({
                 onDisconnect();
                 session.end();
               }}
-              className="bg-(--coach-orange) flex h-8 w-8 items-center justify-center rounded-full text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-(--coach-orange) text-white"
             >
               <PhoneOff className="h-4 w-4" />
             </button>
@@ -302,19 +302,17 @@ export const SessionView = ({
                 <div
                   className={cn(
                     'mb-1 flex items-center gap-1.5 text-[10px] font-semibold tracking-wide uppercase',
-                    msg.role === 'user'
-                      ? 'text-(--coach-warm-gray)'
-                      : 'text-(--coach-orange)'
+                    msg.role === 'user' ? 'text-(--coach-warm-gray)' : 'text-(--coach-orange)'
                   )}
                 >
                   {msg.role === 'agent' && (
-                    <span className="bg-(--coach-orange) inline-flex h-4 w-4 items-center justify-center rounded-full text-[8px] text-white">
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-(--coach-orange) text-[8px] text-white">
                       C
                     </span>
                   )}
                   {msg.role === 'agent' ? 'AI Coach' : 'You'} &bull; {formatTime(msg.timestamp)}
                   {msg.role === 'user' && (
-                    <span className="bg-(--coach-green) inline-flex h-4 w-4 items-center justify-center rounded-full text-[8px] text-white">
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-(--coach-green) text-[8px] text-white">
                       U
                     </span>
                   )}
@@ -323,16 +321,26 @@ export const SessionView = ({
                   className={cn(
                     'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
                     msg.isActions
-                      ? 'border-(--coach-green) bg-(--coach-green-light) border'
+                      ? 'border border-(--coach-green) bg-(--coach-green-light)'
                       : msg.role === 'user'
-                        ? 'bg-(--coach-cream) text-foreground border-(--coach-border) border'
-                        : 'bg-card text-foreground border-(--coach-border) border'
+                        ? 'text-foreground border border-(--coach-border) bg-(--coach-cream)'
+                        : 'bg-card text-foreground border border-(--coach-border)'
                   )}
                 >
                   {msg.isActions && (
-                    <div className="text-(--coach-green) mb-2 flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase">
-                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-(--coach-green) uppercase">
+                      <svg
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
                       Committed Actions
                     </div>
@@ -344,7 +352,7 @@ export const SessionView = ({
           </AnimatePresence>
 
           {transcriptMessages.length === 0 && (
-            <div className="text-(--coach-warm-gray) flex h-full items-center justify-center text-center text-sm">
+            <div className="flex h-full items-center justify-center text-center text-sm text-(--coach-warm-gray)">
               Your coach is listening...
             </div>
           )}
@@ -353,19 +361,19 @@ export const SessionView = ({
         {/* Chat input */}
         <form
           onSubmit={handleSend}
-          className="border-(--coach-border) flex items-center gap-2 border-t px-4 py-3"
+          className="flex items-center gap-2 border-t border-(--coach-border) px-4 py-3"
         >
           <input
             type="text"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             placeholder="Type a note or message..."
-            className="bg-secondary text-foreground placeholder:text-(--coach-warm-gray) flex-1 rounded-full px-4 py-2.5 text-sm outline-none"
+            className="bg-secondary text-foreground flex-1 rounded-full px-4 py-2.5 text-sm outline-none placeholder:text-(--coach-warm-gray)"
           />
           <button
             type="submit"
             disabled={!chatInput.trim()}
-            className="bg-(--coach-green) flex h-9 w-9 items-center justify-center rounded-full text-white transition-opacity disabled:opacity-30"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-(--coach-green) text-white transition-opacity disabled:opacity-30"
           >
             <Send className="h-4 w-4" />
           </button>
