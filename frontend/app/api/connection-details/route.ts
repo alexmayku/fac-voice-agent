@@ -87,7 +87,7 @@ function createParticipantToken(
   // Always trigger agent dispatch (unnamed handler).
   // Pass the mode via agent dispatch metadata so the handler can route.
   at.roomConfig = new RoomConfiguration({
-    agents: [{ metadata: agentName || '' }],
+    agents: [{ agentName: agentName || '', metadata: agentName || '' }],
   });
 
   return at.toJwt();

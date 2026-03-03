@@ -16,27 +16,30 @@ spec:
       containers:
         - name: my-agent
           image: alexsmilansky/my-agent:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           envFrom:
             - secretRef:
-                name: newapp-secrets
+                name: coach-app-secrets
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
-              cpu: 250m
+              cpu: 500m
               memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
           livenessProbe:
-            httpGet:
-              path: /
-              port: 8000
+            exec:
+              command:
+                - cat
+                - /proc/1/status
             initialDelaySeconds: 10
             periodSeconds: 15
           readinessProbe:
-            httpGet:
-              path: /
-              port: 8000
+            exec:
+              command:
+                - cat
+                - /proc/1/status
             initialDelaySeconds: 5
             periodSeconds: 10

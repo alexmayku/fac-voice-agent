@@ -98,7 +98,7 @@ class VoiceAgent(Agent):
 
 server = AgentServer()
 
-@server.rtc_session()
+@server.rtc_session(agent_name="weekly-coach")
 async def entrypoint(ctx: agents.JobContext):
     logger.info("Job received — agent_name=%r, metadata=%r", ctx.job.agent_name, ctx.job.metadata)
 

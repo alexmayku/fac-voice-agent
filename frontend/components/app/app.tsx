@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { TokenSource } from 'livekit-client';
 import { useSession } from '@livekit/components-react';
@@ -29,8 +29,16 @@ interface AppProps {
 
 export function App({ appConfig }: AppProps) {
   const searchParams = useSearchParams();
-  const mode = searchParams.get('mode');
-  const effectiveAgentName = mode === 'review' ? 'review-coach' : appConfig.agentName;
+  const urlMode = searchParams.get('mode');
+  const [selectedMode, setSelectedMode] = useState<'planning' | 'review'>(
+    urlMode === 'review' ? 'review' : 'planning'
+  );
+
+  const effectiveAgentName = selectedMode === 'review' ? 'review-coach' : 'weekly-coach';
+
+  const handleModeSelect = useCallback((mode: 'planning' | 'review') => {
+    setSelectedMode(mode);
+  }, []);
 
   const effectiveConfig = useMemo(() => {
     return { ...appConfig, agentName: effectiveAgentName };
@@ -59,9 +67,7 @@ export function App({ appConfig }: AppProps) {
   return (
     <AgentSessionProvider session={session}>
       <AppSetup />
-      <main className="grid h-svh grid-cols-1 place-content-center">
-        <ViewController appConfig={appConfig} mode={mode} />
-      </main>
+      <ViewController mode={selectedMode} onModeSelect={handleModeSelect} />
       <StartAudioButton label="Start Audio" />
       <Toaster
         icons={{

@@ -22,24 +22,22 @@ export interface AppConfig {
 }
 
 export const APP_CONFIG_DEFAULTS: AppConfig = {
-  companyName: 'LiveKit',
-  pageTitle: 'LiveKit Voice Agent',
-  pageDescription: 'A voice agent built with LiveKit',
+  companyName: 'Coach',
+  pageTitle: 'Weekly Coach',
+  pageDescription: 'Your weekly voice coaching ritual',
 
   supportsChatInput: true,
-  supportsVideoInput: true,
-  supportsScreenShare: true,
+  supportsVideoInput: false,
+  supportsScreenShare: false,
   isPreConnectBufferEnabled: true,
 
   logo: '/lk-logo.svg',
-  accent: '#002cf2',
+  accent: '#5b7553',
   logoDark: '/lk-logo-dark.svg',
-  accentDark: '#1fd5f9',
-  startButtonText: 'Start Coaching Session',
+  accentDark: '#7b9b73',
+  startButtonText: 'Begin Session',
 
-  // agent dispatch configuration
   agentName: process.env.AGENT_NAME ?? undefined,
 
-  // LiveKit Cloud Sandbox configuration
   sandboxId: undefined,
 };

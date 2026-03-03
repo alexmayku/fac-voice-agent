@@ -16,6 +16,7 @@ spec:
       containers:
         - name: my-frontend
           image: alexsmilansky/my-frontend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           envFrom:

@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from 'motion/react';
 import { useSessionContext } from '@livekit/components-react';
-import type { AppConfig } from '@/app-config';
 import { SessionView } from '@/components/app/session-view';
 import { WelcomeView } from '@/components/app/welcome-view';
 
@@ -28,28 +27,34 @@ const VIEW_MOTION_PROPS = {
 };
 
 interface ViewControllerProps {
-  appConfig: AppConfig;
-  mode: string | null;
+  mode: 'planning' | 'review';
+  onModeSelect: (mode: 'planning' | 'review') => void;
 }
 
-export function ViewController({ appConfig, mode }: ViewControllerProps) {
-  const { isConnected, start } = useSessionContext();
+export function ViewController({ mode, onModeSelect }: ViewControllerProps) {
+  const { isConnected, start, end } = useSessionContext();
+
+  const handleStartSession = (selectedMode: 'planning' | 'review') => {
+    onModeSelect(selectedMode);
+    start();
+  };
 
   return (
     <AnimatePresence mode="wait">
-      {/* Welcome view */}
       {!isConnected && (
         <MotionWelcomeView
           key="welcome"
           {...VIEW_MOTION_PROPS}
-          startButtonText={appConfig.startButtonText}
-          onStartCall={start}
-          mode={mode}
+          onStartSession={handleStartSession}
         />
       )}
-      {/* Session view */}
       {isConnected && (
-        <MotionSessionView key="session-view" {...VIEW_MOTION_PROPS} appConfig={appConfig} />
+        <MotionSessionView
+          key="session-view"
+          {...VIEW_MOTION_PROPS}
+          mode={mode}
+          onDisconnect={end}
+        />
       )}
     </AnimatePresence>
   );
