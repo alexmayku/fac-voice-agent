@@ -44,7 +44,7 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          kubectl set image deployment/my-frontend my-frontend=${{ secrets.DOCKERHUB_USERNAME }}/my-frontend:${{ github.sha }} --namespace my-newapp
-          kubectl set image deployment/my-agent my-agent=${{ secrets.DOCKERHUB_USERNAME }}/my-agent:${{ github.sha }} --namespace my-newapp
-          kubectl rollout status deployment/my-frontend --namespace my-newapp --timeout=120s
-          kubectl rollout status deployment/my-agent --namespace my-newapp --timeout=120s
+          kubectl set image deployment/my-frontend my-frontend=${{ secrets.DOCKERHUB_USERNAME }}/my-frontend:${{ github.sha }} --namespace coach-app
+          kubectl set image deployment/my-agent my-agent=${{ secrets.DOCKERHUB_USERNAME }}/my-agent:${{ github.sha }} --namespace coach-app
+          kubectl rollout status deployment/my-frontend --namespace coach-app --timeout=120s
+          kubectl rollout status deployment/my-agent --namespace coach-app --timeout=120s
