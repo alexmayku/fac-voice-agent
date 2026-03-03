@@ -35,6 +35,7 @@ export async function POST(req: Request) {
     const user = await currentUser();
     const participantName = user?.firstName ?? user?.emailAddresses?.[0]?.emailAddress ?? 'user';
     const participantIdentity = user?.id ?? `anon_${Math.floor(Math.random() * 10_000)}`;
+    const userEmail = user?.emailAddresses?.[0]?.emailAddress ?? '';
     const roomName = `coaching_${participantIdentity}_${Math.floor(Math.random() * 10_000)}`;
 
     const participantToken = await createParticipantToken(
@@ -42,7 +43,8 @@ export async function POST(req: Request) {
       roomName,
       API_KEY,
       API_SECRET,
-      agentName
+      agentName,
+      userEmail
     );
 
     // Return connection details
@@ -69,7 +71,8 @@ function createParticipantToken(
   roomName: string,
   apiKey: string,
   apiSecret: string,
-  agentName?: string
+  agentName?: string,
+  userEmail?: string
 ): Promise<string> {
   const at = new AccessToken(apiKey, apiSecret, {
     ...userInfo,
@@ -83,6 +86,10 @@ function createParticipantToken(
     canSubscribe: true,
   };
   at.addGrant(grant);
+
+  if (userEmail) {
+    at.attributes = { email: userEmail };
+  }
 
   // Always trigger agent dispatch (unnamed handler).
   // Pass the mode via agent dispatch metadata so the handler can route.

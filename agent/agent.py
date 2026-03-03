@@ -22,7 +22,9 @@ DATA_DIR = Path(__file__).parent / "data"
 memory = {}
 
 class VoiceAgent(Agent):
-    def __init__(self):
+    def __init__(self, user_id: str = "", user_email: str = ""):
+        self.user_id = user_id
+        self.user_email = user_email
         system_prompt = (Path(__file__).parent / "prompts" / "weekly_coach_system.txt").read_text()
 
         super().__init__(
@@ -46,7 +48,7 @@ class VoiceAgent(Agent):
     @function_tool
     async def send_test_email(self) -> str:
         """Send a test email to verify email delivery is working. Call this when the user asks to test the email."""
-        email_to = os.getenv("EMAIL_TO")
+        email_to = self.user_email or os.getenv("EMAIL_TO")
         if not resend.api_key or not email_to:
             return (
                 "Test email not sent. "
@@ -55,7 +57,7 @@ class VoiceAgent(Agent):
             )
         try:
             resend.Emails.send({
-                "from": "Coach <onboarding@resend.dev>",
+                "from": "Coach <coach@coach.hardwarestartup.com>",
                 "to": email_to,
                 "subject": "Test — coaching email setup",
                 "text": "If you're reading this, email delivery is working.",
@@ -74,14 +76,19 @@ class VoiceAgent(Agent):
         )
 
         # Persist summary so the Friday review agent can reference it
-        DATA_DIR.mkdir(exist_ok=True)
-        (DATA_DIR / "latest_summary.json").write_text(json.dumps({"summary": summary}))
+        if self.user_id:
+            user_dir = DATA_DIR / self.user_id
+            user_dir.mkdir(parents=True, exist_ok=True)
+            (user_dir / "latest_summary.json").write_text(json.dumps({"summary": summary}))
+        else:
+            DATA_DIR.mkdir(exist_ok=True)
+            (DATA_DIR / "latest_summary.json").write_text(json.dumps({"summary": summary}))
 
-        email_to = os.getenv("EMAIL_TO")
+        email_to = self.user_email or os.getenv("EMAIL_TO")
         if resend.api_key and email_to:
             try:
                 resend.Emails.send({
-                    "from": "Coach <onboarding@resend.dev>",
+                    "from": "Coach <coach@coach.hardwarestartup.com>",
                     "to": email_to,
                     "subject": "Weekly coaching summary",
                     "text": summary,
@@ -102,17 +109,25 @@ server = AgentServer()
 async def entrypoint(ctx: agents.JobContext):
     logger.info("Job received — agent_name=%r, metadata=%r", ctx.job.agent_name, ctx.job.metadata)
 
+    await ctx.connect()
+
+    # Wait for the human participant to extract their identity and email
+    participant = await ctx.wait_for_participant()
+    user_id = participant.identity or ""
+    user_email = (participant.attributes or {}).get("email", "")
+    logger.info("Participant joined — identity=%r, email=%r", user_id, user_email)
+
     mode = ctx.job.metadata or ""
 
     if mode == "review-coach":
-        agent = ReviewAgent()
+        agent = ReviewAgent(user_id=user_id, user_email=user_email)
         opening = """
 Let's take a breath.
 
 It's the end of the week. Let's look back at what you set out to do and see how it went.
 """
     else:
-        agent = VoiceAgent()
+        agent = VoiceAgent(user_id=user_id, user_email=user_email)
         opening = """
 Let's take a breath.
 
@@ -141,11 +156,15 @@ What's on your mind?
     await session.generate_reply(instructions=opening)
 
 class ReviewAgent(Agent):
-    def __init__(self):
+    def __init__(self, user_id: str = "", user_email: str = ""):
+        self.user_id = user_id
+        self.user_email = user_email
         system_prompt = (Path(__file__).parent / "prompts" / "weekly_review_system.txt").read_text()
 
-        # Inject Monday commitments if available
-        summary_path = DATA_DIR / "latest_summary.json"
+        # Inject Monday commitments if available (per-user, with legacy fallback)
+        summary_path = DATA_DIR / user_id / "latest_summary.json" if user_id else None
+        if not summary_path or not summary_path.exists():
+            summary_path = DATA_DIR / "latest_summary.json"
         if summary_path.exists():
             try:
                 data = json.loads(summary_path.read_text())
@@ -167,11 +186,11 @@ class ReviewAgent(Agent):
             summary,
             topic="lk.chat",
         )
-        email_to = os.getenv("EMAIL_TO")
+        email_to = self.user_email or os.getenv("EMAIL_TO")
         if resend.api_key and email_to:
             try:
                 resend.Emails.send({
-                    "from": "Coach <onboarding@resend.dev>",
+                    "from": "Coach <coach@coach.hardwarestartup.com>",
                     "to": email_to,
                     "subject": "Weekly review reflections",
                     "text": summary,

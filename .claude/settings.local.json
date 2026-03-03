@@ -3,7 +3,14 @@
     "allow": [
       "Bash(git log:*)",
       "Bash(ls:*)",
-      "Bash(npx prettier:*)"
+      "Bash(npx prettier:*)",
+      "Bash(grep:*)",
+      "Bash(pnpm build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(lsof:*)",
+      "Bash(curl:*)"
     ]
   }
 }
