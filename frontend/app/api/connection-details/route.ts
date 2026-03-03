@@ -1,6 +1,6 @@
-import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { AccessToken, type AccessTokenOptions, type VideoGrant } from 'livekit-server-sdk';
+import { currentUser } from '@clerk/nextjs/server';
 import { RoomConfiguration } from '@livekit/protocol';
 
 type ConnectionDetails = {
