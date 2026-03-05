@@ -29,9 +29,16 @@ const VIEW_MOTION_PROPS = {
 interface ViewControllerProps {
   mode: 'planning' | 'review';
   onModeSelect: (mode: 'planning' | 'review') => void;
+  showOnboarding?: boolean;
+  onOnboardingComplete?: () => void;
 }
 
-export function ViewController({ mode, onModeSelect }: ViewControllerProps) {
+export function ViewController({
+  mode,
+  onModeSelect,
+  showOnboarding,
+  onOnboardingComplete,
+}: ViewControllerProps) {
   const { isConnected, start, end } = useSessionContext();
 
   const handleStartSession = (selectedMode: 'planning' | 'review') => {
@@ -46,6 +53,8 @@ export function ViewController({ mode, onModeSelect }: ViewControllerProps) {
           key="welcome"
           {...VIEW_MOTION_PROPS}
           onStartSession={handleStartSession}
+          showOnboarding={showOnboarding}
+          onOnboardingComplete={onOnboardingComplete}
         />
       )}
       {isConnected && (

@@ -1,16 +1,24 @@
 'use client';
 
-import { ArrowRight, CalendarDays, ClipboardCheck } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowRight, CalendarDays, ClipboardCheck, Settings } from 'lucide-react';
 import { UserButton } from '@clerk/nextjs';
+import { OnboardingDialog } from '@/components/app/onboarding-dialog';
+import { SettingsDialog } from '@/components/app/settings-dialog';
 
 interface WelcomeViewProps {
   onStartSession: (mode: 'planning' | 'review') => void;
+  showOnboarding?: boolean;
+  onOnboardingComplete?: () => void;
 }
 
 export const WelcomeView = ({
   onStartSession,
+  showOnboarding = false,
+  onOnboardingComplete,
   ref,
 }: React.ComponentProps<'div'> & WelcomeViewProps) => {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <div ref={ref} className="flex min-h-svh flex-col">
       <header className="flex items-center justify-between px-6 py-5 md:px-10">
@@ -34,13 +42,22 @@ export const WelcomeView = ({
           </svg>
           <span className="text-foreground text-lg font-semibold tracking-tight">Coach</span>
         </div>
-        <UserButton
-          appearance={{
-            elements: {
-              avatarBox: 'h-9 w-9',
-            },
-          }}
-        />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="hover:text-foreground text-(--coach-warm-gray) transition-colors"
+            aria-label="Settings"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
+          <UserButton
+            appearance={{
+              elements: {
+                avatarBox: 'h-9 w-9',
+              },
+            }}
+          />
+        </div>
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-6 pb-16 md:px-10">
@@ -131,6 +148,9 @@ export const WelcomeView = ({
       <footer className="py-6 text-center text-xs text-(--coach-warm-gray)">
         Mindfulness for the modern mind.
       </footer>
+
+      <OnboardingDialog open={showOnboarding} onComplete={onOnboardingComplete ?? (() => {})} />
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 };

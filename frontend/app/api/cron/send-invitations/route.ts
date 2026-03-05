@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { clerkClient } from '@clerk/nextjs/server';
+import { mergePreferences } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,10 +28,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing RESEND_API_KEY or APP_URL' }, { status: 500 });
   }
 
+  const time = req.nextUrl.searchParams.get('time') || '08:30';
+  const emailKey = mode === 'planning' ? 'planning' : 'review';
+
   const resend = new Resend(resendApiKey);
   const clerk = await clerkClient();
 
-  // Fetch all users (paginated)
+  // Fetch all users (paginated) and filter by email preferences
   const users: { email: string; firstName: string | null }[] = [];
   let offset = 0;
   const limit = 100;
@@ -39,7 +43,13 @@ export async function GET(req: NextRequest) {
     const { data: batch } = await clerk.users.getUserList({ limit, offset });
     for (const user of batch) {
       const email = user.emailAddresses[0]?.emailAddress;
-      if (email) {
+      if (!email) continue;
+
+      const prefs = mergePreferences(user.publicMetadata as Record<string, unknown>);
+      const emailPref = prefs.emails[emailKey];
+
+      // Only send if enabled and time matches
+      if (emailPref.enabled !== false && emailPref.time === time) {
         users.push({ email, firstName: user.firstName });
       }
     }

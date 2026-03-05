@@ -4,7 +4,7 @@ metadata:
   name: monday-planning-email
   namespace: coach-app
 spec:
-  schedule: "30 8 * * 1"
+  schedule: "0,30 7-10 * * 1"
   timeZone: "Europe/London"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
@@ -22,15 +22,18 @@ spec:
                 - sh
                 - -c
                 - |
+                  TIME=$(TZ=Europe/London date +%H:%M)
                   curl -fsS \
                     -H "Authorization: Bearer $(CRON_SECRET)" \
-                    "http://my-frontend.coach-app.svc:80/api/cron/send-invitations?mode=planning"
+                    "http://my-frontend.coach-app.svc:80/api/cron/send-invitations?mode=planning&time=${TIME}"
               env:
                 - name: CRON_SECRET
                   valueFrom:
                     secretKeyRef:
                       name: coach-app-secrets
                       key: CRON_SECRET
+                - name: TZ
+                  value: "Europe/London"
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -38,7 +41,7 @@ metadata:
   name: friday-review-email
   namespace: coach-app
 spec:
-  schedule: "30 8 * * 5"
+  schedule: "0,30 7-10 * * 5"
   timeZone: "Europe/London"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
@@ -56,12 +59,15 @@ spec:
                 - sh
                 - -c
                 - |
+                  TIME=$(TZ=Europe/London date +%H:%M)
                   curl -fsS \
                     -H "Authorization: Bearer $(CRON_SECRET)" \
-                    "http://my-frontend.coach-app.svc:80/api/cron/send-invitations?mode=review"
+                    "http://my-frontend.coach-app.svc:80/api/cron/send-invitations?mode=review&time=${TIME}"
               env:
                 - name: CRON_SECRET
                   valueFrom:
                     secretKeyRef:
                       name: coach-app-secrets
                       key: CRON_SECRET
+                - name: TZ
+                  value: "Europe/London"

@@ -13,7 +13,10 @@
       "Bash(curl:*)",
       "Bash(pnpm add:*)",
       "Bash(pnpm lint:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(pnpm dlx:*)",
+      "Bash(pnpm format:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

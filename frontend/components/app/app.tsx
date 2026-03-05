@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { TokenSource } from 'livekit-client';
+import { useUser } from '@clerk/nextjs';
 import { useSession } from '@livekit/components-react';
 import { WarningIcon } from '@phosphor-icons/react/dist/ssr';
 import type { AppConfig } from '@/app-config';
@@ -30,9 +31,21 @@ interface AppProps {
 export function App({ appConfig }: AppProps) {
   const searchParams = useSearchParams();
   const urlMode = searchParams.get('mode');
+  const { user } = useUser();
   const [selectedMode, setSelectedMode] = useState<'planning' | 'review'>(
     urlMode === 'review' ? 'review' : 'planning'
   );
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+
+  const showOnboarding =
+    !onboardingDismissed &&
+    !!user &&
+    (user.publicMetadata as Record<string, unknown>)?.preferences === undefined;
+
+  const handleOnboardingComplete = useCallback(() => {
+    setOnboardingDismissed(true);
+    user?.reload();
+  }, [user]);
 
   const effectiveAgentName = selectedMode === 'review' ? 'review-coach' : 'weekly-coach';
 
@@ -67,7 +80,12 @@ export function App({ appConfig }: AppProps) {
   return (
     <AgentSessionProvider session={session}>
       <AppSetup />
-      <ViewController mode={selectedMode} onModeSelect={handleModeSelect} />
+      <ViewController
+        mode={selectedMode}
+        onModeSelect={handleModeSelect}
+        showOnboarding={showOnboarding}
+        onOnboardingComplete={handleOnboardingComplete}
+      />
       <StartAudioButton label="Start Audio" />
       <Toaster
         icons={{
