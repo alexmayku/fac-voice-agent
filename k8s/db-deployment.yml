@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coach-app-db
+  namespace: coach-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coach-app-db
+  template:
+    metadata:
+      labels:
+        app: coach-app-db
+    spec:
+      containers:
+        - name: coach-app-db
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: db-secrets
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+              subPath: pgdata
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 768Mi
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: coach-app-db-pvc

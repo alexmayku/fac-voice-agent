@@ -50,6 +50,9 @@ jobs:
         run: |
           kubectl set image deployment/my-frontend my-frontend=${{ secrets.DOCKERHUB_USERNAME }}/my-frontend:${{ github.sha }} --namespace coach-app
           kubectl set image deployment/my-agent my-agent=${{ secrets.DOCKERHUB_USERNAME }}/my-agent:${{ github.sha }} --namespace coach-app
+          kubectl apply -f k8s/db-pvc.yml --namespace coach-app
+          kubectl apply -f k8s/db-deployment.yml --namespace coach-app
+          kubectl apply -f k8s/db-service.yml --namespace coach-app
           kubectl apply -f k8s/email-cronjob.yml --namespace coach-app
           kubectl rollout status deployment/my-frontend --namespace coach-app --timeout=120s
           kubectl rollout status deployment/my-agent --namespace coach-app --timeout=120s
