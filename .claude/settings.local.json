@@ -16,7 +16,8 @@
       "Bash(npx eslint:*)",
       "Bash(pnpm dlx:*)",
       "Bash(pnpm format:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(uv run:*)"
     ]
   }
 }

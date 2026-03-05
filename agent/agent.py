@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import signal
@@ -10,16 +9,13 @@ from livekit.plugins import openai, noise_cancellation
 from pathlib import Path
 import resend
 
+import db
+
 load_dotenv(".env.local")
 
 logger = logging.getLogger(__name__)
 
 resend.api_key = os.getenv("RESEND_API_KEY", "")
-
-DATA_DIR = Path(__file__).parent / "data"
-
-# Simple in-memory storage for notes
-memory = {}
 
 class VoiceAgent(Agent):
     def __init__(self, user_id: str = "", user_email: str = ""):
@@ -34,16 +30,16 @@ class VoiceAgent(Agent):
     @function_tool
     async def save_note(self, note: str) -> str:
         """Save a note to memory. Use this when the user asks you to remember something."""
-        note_id = len(memory) + 1
-        memory[note_id] = note
+        note_id = await db.save_note(self.user_id, note)
         return f"Saved note #{note_id}: {note}"
 
     @function_tool
     async def get_notes(self) -> str:
         """Retrieve all saved notes. Use this when the user asks what you've remembered."""
-        if not memory:
+        notes = await db.get_notes(self.user_id)
+        if not notes:
             return "No notes saved yet."
-        return "\n".join([f"#{id}: {note}" for id, note in memory.items()])
+        return "\n".join([f"#{n['id']}: {n['note']}" for n in notes])
 
     @function_tool
     async def send_test_email(self) -> str:
@@ -75,14 +71,8 @@ class VoiceAgent(Agent):
             topic="lk.chat",
         )
 
-        # Persist summary so the Friday review agent can reference it
-        if self.user_id:
-            user_dir = DATA_DIR / self.user_id
-            user_dir.mkdir(parents=True, exist_ok=True)
-            (user_dir / "latest_summary.json").write_text(json.dumps({"summary": summary}))
-        else:
-            DATA_DIR.mkdir(exist_ok=True)
-            (DATA_DIR / "latest_summary.json").write_text(json.dumps({"summary": summary}))
+        # Persist summary to database so the Friday review agent can reference it
+        await db.save_session(self.user_id, "planning", summary)
 
         email_to = self.user_email or os.getenv("EMAIL_TO")
         if resend.api_key and email_to:
@@ -109,6 +99,7 @@ server = AgentServer()
 async def entrypoint(ctx: agents.JobContext):
     logger.info("Job received — agent_name=%r, metadata=%r", ctx.job.agent_name, ctx.job.metadata)
 
+    await db.init_db()
     await ctx.connect()
 
     # Wait for the human participant to extract their identity and email
@@ -120,7 +111,9 @@ async def entrypoint(ctx: agents.JobContext):
     mode = ctx.job.metadata or ""
 
     if mode == "review-coach":
-        agent = ReviewAgent(user_id=user_id, user_email=user_email)
+        # Load Monday commitments from DB before constructing the agent
+        commitments = await db.get_latest_planning_summary(user_id) if user_id else None
+        agent = ReviewAgent(user_id=user_id, user_email=user_email, commitments=commitments)
         opening = """
 Let's take a breath.
 
@@ -156,22 +149,13 @@ What's on your mind?
     await session.generate_reply(instructions=opening)
 
 class ReviewAgent(Agent):
-    def __init__(self, user_id: str = "", user_email: str = ""):
+    def __init__(self, user_id: str = "", user_email: str = "", commitments: str | None = None):
         self.user_id = user_id
         self.user_email = user_email
         system_prompt = (Path(__file__).parent / "prompts" / "weekly_review_system.txt").read_text()
 
-        # Inject Monday commitments if available (per-user, with legacy fallback)
-        summary_path = DATA_DIR / user_id / "latest_summary.json" if user_id else None
-        if not summary_path or not summary_path.exists():
-            summary_path = DATA_DIR / "latest_summary.json"
-        if summary_path.exists():
-            try:
-                data = json.loads(summary_path.read_text())
-                commitments = data.get("summary", "")
-                system_prompt += f"\n\nThe user's Monday commitments:\n{commitments}"
-            except (json.JSONDecodeError, KeyError):
-                system_prompt += "\n\nNo Monday commitments were found. Ask the user what they set out to do this week."
+        if commitments:
+            system_prompt += f"\n\nThe user's Monday commitments:\n{commitments}"
         else:
             system_prompt += "\n\nNo Monday commitments were found. Ask the user what they set out to do this week."
 
@@ -186,6 +170,7 @@ class ReviewAgent(Agent):
             summary,
             topic="lk.chat",
         )
+        await db.save_session(self.user_id, "review", summary)
         email_to = self.user_email or os.getenv("EMAIL_TO")
         if resend.api_key and email_to:
             try:
