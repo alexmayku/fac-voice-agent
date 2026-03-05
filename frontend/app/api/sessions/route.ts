@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import pg from 'pg';
+import { auth } from '@clerk/nextjs/server';
 
 export const revalidate = 0;
 
@@ -20,7 +20,7 @@ export async function GET() {
     await client.connect();
     const result = await client.query(
       'SELECT id, mode, summary, created_at FROM sessions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20',
-      [userId],
+      [userId]
     );
     return NextResponse.json({ sessions: result.rows });
   } catch (error) {
