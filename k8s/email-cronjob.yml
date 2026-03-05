@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: monday-planning-email
+  namespace: coach-app
+spec:
+  schedule: "30 8 * * 1"
+  timeZone: "Europe/London"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: curl
+              image: curlimages/curl:latest
+              command:
+                - sh
+                - -c
+                - |
+                  curl -fsS \
+                    -H "Authorization: Bearer $(CRON_SECRET)" \
+                    "http://my-frontend.coach-app.svc:80/api/cron/send-invitations?mode=planning"
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: coach-app-secrets
+                      key: CRON_SECRET
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: friday-review-email
+  namespace: coach-app
+spec:
+  schedule: "30 8 * * 5"
+  timeZone: "Europe/London"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: curl
+              image: curlimages/curl:latest
+              command:
+                - sh
+                - -c
+                - |
+                  curl -fsS \
+                    -H "Authorization: Bearer $(CRON_SECRET)" \
+                    "http://my-frontend.coach-app.svc:80/api/cron/send-invitations?mode=review"
+              env:
+                - name: CRON_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: coach-app-secrets
+                      key: CRON_SECRET

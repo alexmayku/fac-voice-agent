@@ -10,7 +10,10 @@
       "Bash(python:*)",
       "Bash(python3:*)",
       "Bash(lsof:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }
