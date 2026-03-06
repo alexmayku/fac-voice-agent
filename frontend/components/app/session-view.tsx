@@ -9,6 +9,7 @@ import {
   useSessionMessages,
   useVoiceAssistant,
 } from '@livekit/components-react';
+import { OrbShader } from '@/components/app/orb-shader';
 import { useInputControls } from '@/hooks/agents-ui/use-agent-control-bar';
 import { cn } from '@/lib/shadcn/utils';
 
@@ -23,84 +24,6 @@ function useSessionTimer() {
     .padStart(2, '0');
   const secs = (seconds % 60).toString().padStart(2, '0');
   return `${mins}:${secs}`;
-}
-
-interface AudioRingVisualizerProps {
-  volume: number;
-  isSpeaking: boolean;
-  isMuted: boolean;
-}
-
-function AudioRingVisualizer({ volume, isSpeaking, isMuted }: AudioRingVisualizerProps) {
-  const ringScale1 = 1 + volume * 0.15;
-  const ringScale2 = 1 + volume * 0.25;
-  const ringScale3 = 1 + volume * 0.35;
-
-  return (
-    <div className="relative flex items-center justify-center">
-      {/* Outer rings */}
-      <motion.div
-        animate={{ scale: isSpeaking ? ringScale3 : 1, opacity: isSpeaking ? 0.08 : 0.04 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="absolute h-72 w-72 rounded-full border border-(--coach-orange)"
-      />
-      <motion.div
-        animate={{ scale: isSpeaking ? ringScale2 : 1, opacity: isSpeaking ? 0.12 : 0.06 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="absolute h-56 w-56 rounded-full border border-(--coach-orange)"
-      />
-      <motion.div
-        animate={{ scale: isSpeaking ? ringScale1 : 1, opacity: isSpeaking ? 0.2 : 0.1 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="absolute h-40 w-40 rounded-full border border-(--coach-orange)"
-      />
-
-      {/* Center mic */}
-      <motion.div
-        animate={{ scale: isSpeaking ? 1.05 : 1 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-        className={cn(
-          'relative z-10 flex h-24 w-24 items-center justify-center rounded-full shadow-lg',
-          isMuted ? 'bg-(--coach-warm-gray)' : 'bg-(--coach-orange)'
-        )}
-      >
-        {isMuted ? (
-          <MicOff className="h-10 w-10 text-white" />
-        ) : (
-          <Mic className="h-10 w-10 text-white" />
-        )}
-      </motion.div>
-    </div>
-  );
-}
-
-interface WaveformBarsProps {
-  volume: number;
-  isSpeaking: boolean;
-  barCount?: number;
-}
-
-function WaveformBars({ volume, isSpeaking, barCount = 24 }: WaveformBarsProps) {
-  const bars = Array.from({ length: barCount }, (_, i) => {
-    const center = barCount / 2;
-    const distFromCenter = Math.abs(i - center) / center;
-    const baseHeight = 0.15 + (1 - distFromCenter) * 0.4;
-    const dynamicHeight = isSpeaking ? baseHeight + volume * (1 - distFromCenter) * 0.5 : 0.15;
-    return Math.min(dynamicHeight, 1);
-  });
-
-  return (
-    <div className="flex items-end justify-center gap-[2px]">
-      {bars.map((height, i) => (
-        <motion.div
-          key={i}
-          animate={{ height: `${Math.max(height * 32, 4)}px` }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          className="w-[3px] rounded-full bg-(--coach-orange) opacity-60"
-        />
-      ))}
-    </div>
-  );
 }
 
 interface TranscriptMessage {
@@ -127,14 +50,13 @@ export const SessionView = ({
 }: React.ComponentProps<'section'> & SessionViewProps) => {
   const session = useSessionContext();
   const { messages: rawMessages } = useSessionMessages(session);
-  const { state: agentState, audioTrack } = useVoiceAssistant();
+  const { audioTrack } = useVoiceAssistant();
   const { send: sendChat } = useChat();
   const { microphoneToggle } = useInputControls({});
   const [chatInput, setChatInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const timer = useSessionTimer();
 
-  const isSpeaking = agentState === 'speaking';
   const isMicMuted = !microphoneToggle.enabled;
 
   const [volume, setVolume] = useState(0);
@@ -200,78 +122,88 @@ export const SessionView = ({
   const sessionTitle = mode === 'review' ? 'Weekly Review' : 'Weekly Planning';
 
   return (
-    <section className="bg-background flex h-svh w-svw" {...props}>
-      {/* Left panel — visualizer */}
-      <div className="relative flex flex-1 flex-col items-center justify-between py-6 max-md:hidden">
+    <section className="relative flex h-svh w-svw" {...props}>
+      <OrbShader audioLevel={volume} sphereCenter={[0, 0.05]} sphereScale={2.8} panelRightWidth={460} />
+
+      {/* Left panel — orb visualizer */}
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-8 max-md:hidden">
         {/* Live badge */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 rounded-full bg-(--coach-orange) px-4 py-1.5 text-xs font-semibold text-white">
-            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-white/80" />
-            LIVE SESSION &bull; {timer}
-          </div>
+        <div className="absolute top-7 left-8 flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-(--coach-accent)" />
+          <span className="text-[10px] font-medium tracking-[0.12em] text-(--coach-warm-gray) uppercase">
+            Live Session
+          </span>
+          <span className="text-[10px] font-light text-(--coach-muted)">{timer}</span>
         </div>
 
-        {/* Visualizer */}
-        <div className="flex flex-col items-center gap-8">
-          <AudioRingVisualizer volume={volume} isSpeaking={isSpeaking} isMuted={isMicMuted} />
-          <WaveformBars volume={volume} isSpeaking={isSpeaking} />
-          <div className="text-center">
-            <h2 className="text-foreground font-serif text-2xl font-medium">{sessionTitle}</h2>
-            {transcriptMessages.length > 0 && (
-              <p className="mt-1 max-w-xs text-sm text-(--coach-warm-gray) italic">
-                &ldquo;{transcriptMessages[transcriptMessages.length - 1]?.text.slice(0, 80)}
-                {(transcriptMessages[transcriptMessages.length - 1]?.text.length ?? 0) > 80
-                  ? '...'
-                  : ''}
-                &rdquo;
-              </p>
-            )}
-          </div>
+        {/* Spacer to match orb position rendered by shader */}
+        <div className="h-[340px] w-[340px]" />
+
+        {/* Session info */}
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-[11px] font-medium tracking-[0.15em] text-(--coach-warm-gray) uppercase">
+            {sessionTitle}
+          </span>
+          {transcriptMessages.length > 0 && (
+            <p className="max-w-[360px] text-center text-[13px] leading-5 font-light text-(--coach-muted) italic">
+              &ldquo;{transcriptMessages[transcriptMessages.length - 1]?.text.slice(0, 80)}
+              {(transcriptMessages[transcriptMessages.length - 1]?.text.length ?? 0) > 80
+                ? '...'
+                : ''}
+              &rdquo;
+            </p>
+          )}
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => microphoneToggle.toggle()}
             className={cn(
-              'flex h-12 w-12 items-center justify-center rounded-full transition-colors',
+              'flex h-12 w-12 items-center justify-center rounded-full border transition-colors',
               isMicMuted
-                ? 'bg-(--coach-warm-gray)/20 text-(--coach-warm-gray)'
-                : 'bg-secondary text-foreground'
+                ? 'border-(--coach-border) bg-black/[0.05] text-(--coach-muted)'
+                : 'text-foreground border-(--coach-border) bg-black/[0.05]'
             )}
           >
-            {isMicMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+            {isMicMuted ? (
+              <MicOff className="h-[18px] w-[18px]" />
+            ) : (
+              <Mic className="h-[18px] w-[18px]" />
+            )}
           </button>
           <button
             onClick={() => {
               onDisconnect();
               session.end();
             }}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-(--coach-orange) text-white transition-opacity hover:opacity-90"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-(--coach-disconnect) text-white transition-opacity hover:opacity-90"
           >
-            <PhoneOff className="h-6 w-6" />
+            <PhoneOff className="h-[18px] w-[18px]" />
           </button>
         </div>
       </div>
 
       {/* Right panel — transcript */}
-      <div className="flex h-full w-full flex-col border-l border-(--coach-border) md:w-[420px] lg:w-[460px]">
+      <div className="relative z-10 flex h-full w-full flex-col border-l border-(--coach-border) bg-black/[0.03] md:w-[420px] lg:w-[460px]">
         {/* Transcript header */}
-        <div className="flex items-center justify-between border-b border-(--coach-border) px-5 py-4">
-          <h3 className="text-foreground text-sm font-semibold">Transcript</h3>
-          {/* Mobile-only live badge and controls */}
+        <div className="flex items-center justify-between border-b border-(--coach-border) px-6 py-5">
+          <h3 className="text-[11px] font-medium tracking-[0.12em] text-(--coach-warm-gray) uppercase">
+            Transcript
+          </h3>
+          {/* Mobile-only controls */}
           <div className="flex items-center gap-2 md:hidden">
-            <div className="flex items-center gap-1.5 rounded-full bg-(--coach-orange) px-3 py-1 text-[10px] font-semibold text-white">
-              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-white/80" />
+            <div className="flex items-center gap-1.5 text-[10px] font-medium text-(--coach-warm-gray)">
+              <div className="h-1.5 w-1.5 rounded-full bg-(--coach-accent)" />
               {timer}
             </div>
             <button
               onClick={() => microphoneToggle.toggle()}
               className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-full text-xs',
+                'flex h-8 w-8 items-center justify-center rounded-full',
                 isMicMuted
-                  ? 'bg-(--coach-warm-gray)/20 text-(--coach-warm-gray)'
-                  : 'bg-secondary text-foreground'
+                  ? 'bg-black/[0.05] text-(--coach-muted)'
+                  : 'text-foreground bg-black/[0.05]'
               )}
             >
               {isMicMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
@@ -281,7 +213,7 @@ export const SessionView = ({
                 onDisconnect();
                 session.end();
               }}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-(--coach-orange) text-white"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-(--coach-disconnect) text-white"
             >
               <PhoneOff className="h-4 w-4" />
             </button>
@@ -289,7 +221,7 @@ export const SessionView = ({
         </div>
 
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+        <div ref={scrollRef} className="flex-1 space-y-5 overflow-y-auto px-6 py-6">
           <AnimatePresence>
             {transcriptMessages.map((msg) => (
               <motion.div
@@ -297,44 +229,37 @@ export const SessionView = ({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
-                className={cn('flex flex-col', msg.role === 'user' ? 'items-end' : 'items-start')}
+                className="flex flex-col"
               >
-                <div
-                  className={cn(
-                    'mb-1 flex items-center gap-1.5 text-[10px] font-semibold tracking-wide uppercase',
-                    msg.role === 'user' ? 'text-(--coach-warm-gray)' : 'text-(--coach-orange)'
-                  )}
-                >
-                  {msg.role === 'agent' && (
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-(--coach-orange) text-[8px] text-white">
-                      C
-                    </span>
-                  )}
-                  {msg.role === 'agent' ? 'AI Coach' : 'You'} &bull; {formatTime(msg.timestamp)}
-                  {msg.role === 'user' && (
-                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-(--coach-green) text-[8px] text-white">
-                      U
-                    </span>
-                  )}
+                <div className="mb-1.5 flex items-center gap-2">
+                  <span
+                    className={cn(
+                      'text-[10px] font-medium tracking-[0.08em] uppercase',
+                      msg.role === 'agent' ? 'text-(--coach-accent)' : 'text-foreground'
+                    )}
+                  >
+                    {msg.role === 'agent' ? 'Coach' : 'You'}
+                  </span>
+                  <span className="text-[10px] font-light text-(--coach-border)">
+                    {formatTime(msg.timestamp)}
+                  </span>
                 </div>
                 <div
                   className={cn(
-                    'max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed',
+                    'text-[13px] leading-[22px] font-light',
                     msg.isActions
-                      ? 'border border-(--coach-green) bg-(--coach-green-light)'
-                      : msg.role === 'user'
-                        ? 'text-foreground border border-(--coach-border) bg-(--coach-cream)'
-                        : 'bg-card text-foreground border border-(--coach-border)'
+                      ? 'rounded border border-(--coach-accent)/20 bg-(--coach-accent-light) px-4 py-3'
+                      : 'text-[#4A4844]'
                   )}
                 >
                   {msg.isActions && (
-                    <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold tracking-wider text-(--coach-green) uppercase">
+                    <div className="mb-2 flex items-center gap-1.5 text-[10px] font-medium tracking-[0.08em] text-(--coach-accent) uppercase">
                       <svg
                         className="h-3.5 w-3.5"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        strokeWidth={2.5}
+                        strokeWidth={2}
                       >
                         <path
                           strokeLinecap="round"
@@ -352,7 +277,7 @@ export const SessionView = ({
           </AnimatePresence>
 
           {transcriptMessages.length === 0 && (
-            <div className="flex h-full items-center justify-center text-center text-sm text-(--coach-warm-gray)">
+            <div className="flex h-full items-center justify-center text-center text-[13px] font-light text-(--coach-muted)">
               Your coach is listening...
             </div>
           )}
@@ -361,19 +286,19 @@ export const SessionView = ({
         {/* Chat input */}
         <form
           onSubmit={handleSend}
-          className="flex items-center gap-2 border-t border-(--coach-border) px-4 py-3"
+          className="flex items-center gap-3 border-t border-(--coach-border) px-6 py-4"
         >
           <input
             type="text"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             placeholder="Type a note or message..."
-            className="bg-secondary text-foreground flex-1 rounded-full px-4 py-2.5 text-sm outline-none placeholder:text-(--coach-warm-gray)"
+            className="text-foreground flex-1 rounded border border-(--coach-border) bg-white/50 px-3.5 py-2.5 text-[12px] font-light outline-none placeholder:text-(--coach-border)"
           />
           <button
             type="submit"
             disabled={!chatInput.trim()}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-(--coach-green) text-white transition-opacity disabled:opacity-30"
+            className="bg-foreground text-background flex h-9 w-9 items-center justify-center rounded-full transition-opacity disabled:opacity-30"
           >
             <Send className="h-4 w-4" />
           </button>

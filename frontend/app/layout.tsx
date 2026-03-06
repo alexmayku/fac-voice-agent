@@ -1,5 +1,4 @@
-import { Inter } from 'next/font/google';
-import localFont from 'next/font/local';
+import { JetBrains_Mono } from 'next/font/google';
 import { headers } from 'next/headers';
 import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from '@/components/app/theme-provider';
@@ -7,36 +6,9 @@ import { cn } from '@/lib/shadcn/utils';
 import { getAppConfig, getStyles } from '@/lib/utils';
 import '@/styles/globals.css';
 
-const inter = Inter({
-  variable: '--font-public-sans',
+const jetbrainsMono = JetBrains_Mono({
+  variable: '--font-jetbrains-mono',
   subsets: ['latin'],
-});
-
-const commitMono = localFont({
-  display: 'swap',
-  variable: '--font-commit-mono',
-  src: [
-    {
-      path: '../fonts/CommitMono-400-Regular.otf',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../fonts/CommitMono-700-Regular.otf',
-      weight: '700',
-      style: 'normal',
-    },
-    {
-      path: '../fonts/CommitMono-400-Italic.otf',
-      weight: '400',
-      style: 'italic',
-    },
-    {
-      path: '../fonts/CommitMono-700-Italic.otf',
-      weight: '700',
-      style: 'italic',
-    },
-  ],
 });
 
 interface RootLayoutProps {
@@ -53,7 +25,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(inter.variable, commitMono.variable, 'scroll-smooth font-sans antialiased')}
+      className={cn(jetbrainsMono.variable, 'scroll-smooth font-sans antialiased')}
     >
       <head>
         {styles && <style>{styles}</style>}

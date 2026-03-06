@@ -49,7 +49,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-foreground font-serif text-2xl font-light">
+          <DialogTitle className="text-[11px] font-medium tracking-[0.12em] text-(--coach-warm-gray) uppercase">
             Email Settings
           </DialogTitle>
         </DialogHeader>
@@ -61,7 +61,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="mt-4 w-full rounded-lg bg-(--coach-green) py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="bg-foreground text-background mt-4 w-full rounded py-3.5 text-[12px] font-medium tracking-[0.06em] transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}
         </button>

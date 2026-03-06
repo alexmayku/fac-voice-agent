@@ -32,9 +32,9 @@ export const APP_CONFIG_DEFAULTS: AppConfig = {
   isPreConnectBufferEnabled: true,
 
   logo: '/lk-logo.svg',
-  accent: '#5b7553',
+  accent: undefined,
   logoDark: '/lk-logo-dark.svg',
-  accentDark: '#7b9b73',
+  accentDark: undefined,
   startButtonText: 'Begin Session',
 
   agentName: process.env.AGENT_NAME ?? undefined,

@@ -1,6 +1,5 @@
 'use client';
 
-import { CalendarDays, ClipboardCheck } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -39,17 +38,12 @@ export function EmailSettings({ preferences, onChange }: EmailSettingsProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Monday planning */}
-      <div className="flex items-center justify-between gap-4 rounded-xl border border-(--coach-border) p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-(--coach-green-light) text-(--coach-green)">
-            <CalendarDays className="h-4 w-4" />
-          </div>
-          <div>
-            <p className="text-foreground text-sm font-medium">Monday Planning</p>
-            <p className="text-xs text-(--coach-warm-gray)">Weekly planning invitation</p>
-          </div>
+      <div className="flex items-center justify-between gap-4 rounded border border-(--coach-border) bg-black/[0.03] p-3.5">
+        <div>
+          <p className="text-foreground text-[13px]">Monday Planning</p>
+          <p className="text-[10px] font-light text-(--coach-muted)">Weekly planning invitation</p>
         </div>
         <div className="flex items-center gap-3">
           <Select
@@ -57,7 +51,7 @@ export function EmailSettings({ preferences, onChange }: EmailSettingsProps) {
             onValueChange={(v) => updatePlanning('time', v)}
             disabled={!preferences.emails.planning.enabled}
           >
-            <SelectTrigger className="h-8 w-[110px] text-xs">
+            <SelectTrigger className="border-border h-7 w-[90px] rounded bg-white/50 text-[11px] font-light">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -76,15 +70,10 @@ export function EmailSettings({ preferences, onChange }: EmailSettingsProps) {
       </div>
 
       {/* Friday review */}
-      <div className="flex items-center justify-between gap-4 rounded-xl border border-(--coach-border) p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-(--coach-orange-light) text-(--coach-orange)">
-            <ClipboardCheck className="h-4 w-4" />
-          </div>
-          <div>
-            <p className="text-foreground text-sm font-medium">Friday Review</p>
-            <p className="text-xs text-(--coach-warm-gray)">Weekly review invitation</p>
-          </div>
+      <div className="flex items-center justify-between gap-4 rounded border border-(--coach-border) bg-black/[0.03] p-3.5">
+        <div>
+          <p className="text-foreground text-[13px]">Friday Review</p>
+          <p className="text-[10px] font-light text-(--coach-muted)">Weekly review invitation</p>
         </div>
         <div className="flex items-center gap-3">
           <Select
@@ -92,7 +81,7 @@ export function EmailSettings({ preferences, onChange }: EmailSettingsProps) {
             onValueChange={(v) => updateReview('time', v)}
             disabled={!preferences.emails.review.enabled}
           >
-            <SelectTrigger className="h-8 w-[110px] text-xs">
+            <SelectTrigger className="border-border h-7 w-[90px] rounded bg-white/50 text-[11px] font-light">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

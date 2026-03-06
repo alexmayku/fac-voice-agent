@@ -46,29 +46,25 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader>
-          <DialogTitle className="text-foreground font-serif text-2xl font-light">
-            Welcome to Coach
-          </DialogTitle>
-          <DialogDescription className="text-sm leading-relaxed text-(--coach-warm-gray)">
-            Each week follows a simple rhythm: on{' '}
-            <strong className="text-foreground">Monday</strong>, you&apos;ll get a link to a short
-            voice coaching session where we&apos;ll map out your priorities — then a summary lands
-            in your inbox. On <strong className="text-foreground">Friday</strong>, another link
-            arrives for a quick review of how the week went. You can adjust or turn off these
-            reminders below.
+        <DialogHeader className="items-center text-center">
+          <DialogTitle className="text-foreground text-lg font-light">Welcome to Coach</DialogTitle>
+          <DialogDescription className="text-[12px] leading-5 font-light text-(--coach-warm-gray)">
+            Two weekly rituals to keep you focused. Monday planning sets your intentions. Friday
+            review celebrates your wins.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-2">
-          <p className="text-foreground mb-3 text-sm font-medium">Email Reminders</p>
+        <div className="mt-4">
+          <p className="mb-3 text-[10px] font-medium tracking-[0.12em] text-(--coach-warm-gray) uppercase">
+            Email Reminders
+          </p>
           <EmailSettings preferences={preferences} onChange={setPreferences} />
         </div>
 
         <button
           onClick={handleGetStarted}
           disabled={saving}
-          className="mt-4 w-full rounded-lg bg-(--coach-green) py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="bg-foreground text-background mt-4 w-full rounded py-3.5 text-[12px] font-medium tracking-[0.06em] transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Get Started'}
         </button>
