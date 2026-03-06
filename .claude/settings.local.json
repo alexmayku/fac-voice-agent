@@ -31,7 +31,8 @@
       "mcp__paper__delete_nodes",
       "mcp__paper__get_tree_summary",
       "mcp__paper__get_computed_styles",
-      "mcp__paper__update_styles"
+      "mcp__paper__update_styles",
+      "Bash(pnpm format:check:*)"
     ]
   }
 }

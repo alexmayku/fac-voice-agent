@@ -123,7 +123,12 @@ export const SessionView = ({
 
   return (
     <section className="relative flex h-svh w-svw" {...props}>
-      <OrbShader audioLevel={volume} sphereCenter={[0, 0.05]} sphereScale={2.8} panelRightWidth={460} />
+      <OrbShader
+        audioLevel={volume}
+        sphereCenter={[0, 0.05]}
+        sphereScale={2.8}
+        panelRightWidth={460}
+      />
 
       {/* Left panel — orb visualizer */}
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-8 max-md:hidden">

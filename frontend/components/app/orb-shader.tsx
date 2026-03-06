@@ -203,8 +203,7 @@ export function OrbShader({
       const cssW = canvas.clientWidth;
       const cssH = canvas.clientHeight;
       const minDim = Math.min(cssW, cssH);
-      const panelCenterX =
-        panelRightWidth > 0 ? (cssW - panelRightWidth) / 2 : cssW / 2;
+      const panelCenterX = panelRightWidth > 0 ? (cssW - panelRightWidth) / 2 : cssW / 2;
       const offsetX = (panelCenterX - cssW / 2) / minDim;
       gl.uniform2f(
         gl.getUniformLocation(program, 'u_sphere_center'),
@@ -226,7 +225,7 @@ export function OrbShader({
       gl.deleteShader(fs);
       gl.deleteBuffer(buf);
     };
-  }, [sphereCenter, sphereScale]);
+  }, [sphereCenter, sphereScale, panelRightWidth]);
 
   return (
     <canvas
