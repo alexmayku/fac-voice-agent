@@ -43,7 +43,7 @@ export function EmailSettings({ preferences, onChange }: EmailSettingsProps) {
       <div className="flex items-center justify-between gap-4 rounded border border-(--coach-border) bg-black/[0.03] p-3.5">
         <div>
           <p className="text-foreground text-[13px]">Monday Planning</p>
-          <p className="text-[10px] font-light text-(--coach-muted)">Weekly planning invitation</p>
+          <p className="text-[10px] font-normal text-(--coach-muted)">Weekly planning invitation</p>
         </div>
         <div className="flex items-center gap-3">
           <Select
@@ -51,7 +51,7 @@ export function EmailSettings({ preferences, onChange }: EmailSettingsProps) {
             onValueChange={(v) => updatePlanning('time', v)}
             disabled={!preferences.emails.planning.enabled}
           >
-            <SelectTrigger className="border-border h-7 w-[90px] rounded bg-white/50 text-[11px] font-light">
+            <SelectTrigger className="border-border h-7 w-[110px] rounded bg-white/50 text-[11px] font-normal">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -73,7 +73,7 @@ export function EmailSettings({ preferences, onChange }: EmailSettingsProps) {
       <div className="flex items-center justify-between gap-4 rounded border border-(--coach-border) bg-black/[0.03] p-3.5">
         <div>
           <p className="text-foreground text-[13px]">Friday Review</p>
-          <p className="text-[10px] font-light text-(--coach-muted)">Weekly review invitation</p>
+          <p className="text-[10px] font-normal text-(--coach-muted)">Weekly review invitation</p>
         </div>
         <div className="flex items-center gap-3">
           <Select
@@ -81,7 +81,7 @@ export function EmailSettings({ preferences, onChange }: EmailSettingsProps) {
             onValueChange={(v) => updateReview('time', v)}
             disabled={!preferences.emails.review.enabled}
           >
-            <SelectTrigger className="border-border h-7 w-[90px] rounded bg-white/50 text-[11px] font-light">
+            <SelectTrigger className="border-border h-7 w-[110px] rounded bg-white/50 text-[11px] font-normal">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

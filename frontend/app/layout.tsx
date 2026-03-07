@@ -1,4 +1,4 @@
-import { JetBrains_Mono } from 'next/font/google';
+import { Space_Mono } from 'next/font/google';
 import { headers } from 'next/headers';
 import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from '@/components/app/theme-provider';
@@ -6,8 +6,9 @@ import { cn } from '@/lib/shadcn/utils';
 import { getAppConfig, getStyles } from '@/lib/utils';
 import '@/styles/globals.css';
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-jetbrains-mono',
+const spaceMono = Space_Mono({
+  variable: '--font-space-mono',
+  weight: ['400', '700'],
   subsets: ['latin'],
 });
 
@@ -25,7 +26,7 @@ export default async function RootLayout({ children }: RootLayoutProps) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(jetbrainsMono.variable, 'scroll-smooth font-sans antialiased')}
+      className={cn(spaceMono.variable, 'scroll-smooth font-sans antialiased')}
     >
       <head>
         {styles && <style>{styles}</style>}

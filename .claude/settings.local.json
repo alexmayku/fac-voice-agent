@@ -32,7 +32,10 @@
       "mcp__paper__get_tree_summary",
       "mcp__paper__get_computed_styles",
       "mcp__paper__update_styles",
-      "Bash(pnpm format:check:*)"
+      "Bash(pnpm format:check:*)",
+      "mcp__figma__get_design_context",
+      "mcp__figma__get_metadata",
+      "mcp__figma__get_screenshot"
     ]
   }
 }

@@ -47,8 +47,10 @@ export function OnboardingDialog({ open, onComplete }: OnboardingDialogProps) {
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader className="items-center text-center">
-          <DialogTitle className="text-foreground text-lg font-light">Welcome to Coach</DialogTitle>
-          <DialogDescription className="text-[12px] leading-5 font-light text-(--coach-warm-gray)">
+          <DialogTitle className="text-foreground text-lg font-normal">
+            Welcome to Coach
+          </DialogTitle>
+          <DialogDescription className="text-[12px] leading-5 font-normal text-(--coach-warm-gray)">
             Two weekly rituals to keep you focused. Monday planning sets your intentions. Friday
             review celebrates your wins.
           </DialogDescription>
