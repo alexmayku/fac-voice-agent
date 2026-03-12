@@ -35,7 +35,9 @@
       "Bash(pnpm format:check:*)",
       "mcp__figma__get_design_context",
       "mcp__figma__get_metadata",
-      "mcp__figma__get_screenshot"
+      "mcp__figma__get_screenshot",
+      "Bash(cd /Users/alexsmilansky/repos/FAC/livekit-voice-agent/frontend && npx tailwindcss --help 2>&1 | head -5 || true)",
+      "Bash(find /Users/alexsmilansky/repos/FAC/livekit-voice-agent/frontend/.next -name \"*.css\" 2>/dev/null | head -5)"
     ]
   }
 }
