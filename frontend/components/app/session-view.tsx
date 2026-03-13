@@ -241,7 +241,7 @@ export const SessionView = ({
       </div>
 
       {/* ===== RIGHT / BOTTOM PANEL — transcript ===== */}
-      <div className="relative z-10 flex flex-col max-md:flex-1 max-md:border-t border-[#e5e7eb] bg-[rgba(0,0,0,0.02)] md:h-full md:max-h-svh md:w-[420px] md:flex-none md:border-l lg:w-[460px]">
+      <div className="relative z-10 flex flex-col border-[#e5e7eb] bg-[rgba(0,0,0,0.02)] max-md:flex-1 max-md:border-t md:h-full md:max-h-svh md:w-[420px] md:flex-none md:border-l lg:w-[460px]">
         {/* Transcript header */}
         <div className="flex items-center justify-between border-b border-[#e5e7eb] px-5 py-4 md:px-6 md:py-5">
           <h3 className="text-[10px] tracking-[1.32px] text-[#6b7280] uppercase md:text-[11px]">
