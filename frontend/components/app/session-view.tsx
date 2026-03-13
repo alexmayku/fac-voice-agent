@@ -123,7 +123,7 @@ export const SessionView = ({
   const sessionTitle = mode === 'review' ? 'Weekly Review' : 'Weekly Planning';
 
   return (
-    <section className="relative flex h-svh w-svw flex-col md:flex-row" {...props}>
+    <section className="relative flex h-svh w-svw max-md:flex-col md:flex-row" {...props}>
       <SessionBackground />
 
       {/* ===== MOBILE LAYOUT ===== */}
